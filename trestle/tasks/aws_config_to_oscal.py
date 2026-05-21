@@ -33,7 +33,6 @@ class AwsConfigToOscal(TaskBase):
     def execute(self) -> TaskOutcome:
         """Execute the AWS Config to OSCAL translation task."""
         try:
-            # 1. Dynamic Configuration Variables
             input_dir_str = self._config.get('input-dir')
             if not input_dir_str:
                 logger.error("Configuration 'input-dir' is required.")
@@ -55,7 +54,6 @@ class AwsConfigToOscal(TaskBase):
             observations = []
             findings = []
             
-            # 2. Iterate through ALL JSON files in the input directory
             processed_files = 0
             for aws_file in input_dir.glob('*.json'):
                 processed_files += 1
@@ -77,7 +75,6 @@ class AwsConfigToOscal(TaskBase):
                     compliance = record.get('ComplianceType', 'NOT_APPLICABLE')
                     timestamp = record.get('ResultRecordedTime', datetime.now(timezone.utc).isoformat())
                     
-                    # Map AWS states to OSCAL states
                     if compliance == 'COMPLIANT':
                         state = 'satisfied'
                     elif compliance == 'NON_COMPLIANT':
@@ -124,7 +121,6 @@ class AwsConfigToOscal(TaskBase):
                 logger.warning("No EvaluationResults found in any of the processed AWS Config JSON files.")
                 return TaskOutcome.FAILURE
 
-            # 3. Apply Dynamic Variables to OSCAL Object
             oscal_dict = {
                 "uuid": str(uuid.uuid4()),
                 "metadata": {
@@ -155,7 +151,6 @@ class AwsConfigToOscal(TaskBase):
                 ]
             }
             
-            # 4. Validate and Output
             assessment_results = ar.AssessmentResults.parse_obj(oscal_dict)
             output_file = output_dir / output_filename
             safe_json_string = assessment_results.json(exclude_none=True, by_alias=True)
